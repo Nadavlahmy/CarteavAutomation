@@ -28,7 +28,7 @@ def test_example_page():
         print("➡ Clicked 'Move to Testing User'")
 
         # Keep browser open to verify the action
-        input("🟢 Browser is open. Press Enter to close, and see test results")
+        input("🟢 Browser is open. Press Enter in console to close, and see test results")
 
         # Close browser
         browser.close()

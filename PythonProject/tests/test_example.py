@@ -1,59 +1,53 @@
-from playwright.sync_api import Page
+import time
+
+from playwright.sync_api import sync_playwright
+
+from pages.example_page import ExamplePage
 
 
-class ExamplePage:
-    URL = "https://office.carteav.com"
+def test_example_page():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False, slow_mo=300)
 
-    def __init__(self, page: Page):
-        self.page = page
-
-    def open(self):
-        self.page.goto(self.URL)
-
-    def click_move_to_testing_user(self):
-        selector = 'button:has-text("DEMO USER 1")'
-        self.page.wait_for_selector(selector, state="visible", timeout=15000)
-        self.page.eval_on_selector(selector, "el => el.scrollIntoView()")
-        self.page.click(selector)
-        print("➡ Clicked 'Move to Testing User'")
-
-    def open_poi_dropdown(self):
-        selector = ".topLeftActionsButtonsContainer > div:first-child"
-        self.page.wait_for_selector(selector, timeout=15000)
-        self.page.evaluate(
-            """(selector) => {
-                document.querySelector(selector).click();
-            }""",
-            selector
+        # Create a browser context with geolocation permission
+        context = browser.new_context(
+            permissions=["geolocation"]
         )
-        print("📂 Opened POI dropdown")
 
-    def click_move_to_spa_sababa(self):
-        selector = '#pois_items > div > div:nth-child(6) > div.poi_poiTextContainer__V4Q1q > div > div'
-        self.page.wait_for_selector(selector, state="visible", timeout=15000)
-        self.page.eval_on_selector(selector, "el => el.scrollIntoView()")
-        self.page.click(selector)
-        print("➡ Clicked 'Spa sababa'")
+        # Open a new page in that context
+        page = context.new_page()
+        example = ExamplePage(page)
+        example.open()
 
-    def click_order_vehicle(self):
-        # Click the "הזמן רכב" button by visible text
-        locator = self.page.locator('text=הזמן רכב')
+        # Verify page title contains "Carteav"
+        assert "Carteav" in example.title()
+        print("✅ Page opened successfully")
 
-        locator.wait_for(state="visible", timeout=15000)
-        locator.scroll_into_view_if_needed()
-        locator.click(force=True)
+        time.sleep(3)
 
-        print("➡ Clicked 'הזמן רכב'")
+        # Click 'Move to Testing User'
+        example.click_move_to_testing_user()
+        time.sleep(7)
 
-    def click_start_driving(self):
-        # Click the "התחל נסיעה" button by visible text
-        locator = self.page.locator('text=התחל נסיעה')
+        # Open the POI dropdown
+        example.open_poi_dropdown()
+        time.sleep(2)
 
-        locator.wait_for(state="visible", timeout=15000)
-        locator.scroll_into_view_if_needed()
-        locator.click(force=True)
+        # Select the first station ('Spa sababa')
+        example.click_move_to_spa_sababa()
+        time.sleep(2)
 
-        print("➡ Clicked 'התחל נסיעה'")
+        # Click "הזמן רכב"
+        example.click_order_vehicle()
+        time.sleep(3)
 
-    def title(self):
-        return self.page.title()
+        # Click "התחל נסיעה"
+        example.click_start_driving()
+        time.sleep(3)
+
+        # Keep the browser open so you can see what happened
+        input("🟢 Browser is open. Press Enter in console to close, and see test results")
+
+        # Close the browser
+        browser.close()
+        print("✅ Browser closed")

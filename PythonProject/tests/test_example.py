@@ -1,35 +1,59 @@
-import time
-from playwright.sync_api import sync_playwright
-from pages.example_page import ExamplePage
+from playwright.sync_api import Page
 
-def test_example_page():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, slow_mo=300)
 
-        # ✅ Create a context with browser permission granted
-        # Replace "geolocation" with "notifications" if the popup is notifications
-        context = browser.new_context(
-            permissions=["geolocation"]
-        )
+class ExamplePage:
+    URL = "https://office.carteav.com"
 
-        # Open a new page in the context
-        page = context.new_page()
-        example = ExamplePage(page)
-        example.open()
+    def __init__(self, page: Page):
+        self.page = page
 
-        # Verify page title contains "Carteav"
-        assert "Carteav" in example.title()
-        print("✅ Page opened successfully")
+    def open(self):
+        self.page.goto(self.URL)
 
-        time.sleep(3)
-
-        # Click Move to Testing User button
-        example.click_move_to_testing_user()
+    def click_move_to_testing_user(self):
+        selector = 'button:has-text("DEMO USER 1")'
+        self.page.wait_for_selector(selector, state="visible", timeout=15000)
+        self.page.eval_on_selector(selector, "el => el.scrollIntoView()")
+        self.page.click(selector)
         print("➡ Clicked 'Move to Testing User'")
 
-        # Keep browser open to verify the action
-        input("🟢 Browser is open. Press Enter in console to close, and see test results")
+    def open_poi_dropdown(self):
+        selector = ".topLeftActionsButtonsContainer > div:first-child"
+        self.page.wait_for_selector(selector, timeout=15000)
+        self.page.evaluate(
+            """(selector) => {
+                document.querySelector(selector).click();
+            }""",
+            selector
+        )
+        print("📂 Opened POI dropdown")
 
-        # Close browser
-        browser.close()
-        print("✅ Browser closed")
+    def click_move_to_spa_sababa(self):
+        selector = '#pois_items > div > div:nth-child(6) > div.poi_poiTextContainer__V4Q1q > div > div'
+        self.page.wait_for_selector(selector, state="visible", timeout=15000)
+        self.page.eval_on_selector(selector, "el => el.scrollIntoView()")
+        self.page.click(selector)
+        print("➡ Clicked 'Spa sababa'")
+
+    def click_order_vehicle(self):
+        # Click the "הזמן רכב" button by visible text
+        locator = self.page.locator('text=הזמן רכב')
+
+        locator.wait_for(state="visible", timeout=15000)
+        locator.scroll_into_view_if_needed()
+        locator.click(force=True)
+
+        print("➡ Clicked 'הזמן רכב'")
+
+    def click_start_driving(self):
+        # Click the "התחל נסיעה" button by visible text
+        locator = self.page.locator('text=התחל נסיעה')
+
+        locator.wait_for(state="visible", timeout=15000)
+        locator.scroll_into_view_if_needed()
+        locator.click(force=True)
+
+        print("➡ Clicked 'התחל נסיעה'")
+
+    def title(self):
+        return self.page.title()
